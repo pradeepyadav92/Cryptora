@@ -1,0 +1,179 @@
+import os
+import json
+import hashlib
+file_data = "data.json"
+users_file = "users.json"
+'''-------------------------------------------------------------------------------------'''
+# Helper functions to load data from files
+def load_password():
+    if os.path.exists(file_data):
+        try:
+            with open(file_data, 'r') as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            print("Error: The password file is corrupted.")
+    return {}
+'''-------------------------------------------------------------------------------------'''
+#  Helper functions to save password
+def save_password(data):
+    try:
+        with open(file_data, 'w') as file:
+            file.write(json.dumps(data) + '\n')
+    except Exception as e:
+        print(f"Error: {e}")
+'''-------------------------------------------------------------------------------------'''
+# Helper functions to load data 
+def load_users():
+    if os.path.exists(users_file):
+        try:
+            with open(users_file, 'r') as file:
+                return json.load(file)
+        except json.JSONDecodeError:
+            print("Error: The users file is corrupted.")
+    return {}
+'''-------------------------------------------------------------------------------------'''
+# Helper functions to save user data
+def save_users(users):
+    try:
+        with open(users_file, 'w') as file:
+            file.write(json.dumps(users) + '\n')
+    except Exception as e:
+        print(f"Error: {e}")
+'''-------------------------------------------------------------------------------------'''
+# Hashing password for security
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+'''-------------------------------------------------------------------------------------'''
+# Authentication system(sign up)
+def signup():
+    users = load_users()
+    username = input("Enter username: ").strip()
+    if username in users:
+        print("Error: Username already exists.")
+        return None
+    password = input("Enter password: ").strip()
+    users[username] = hash_password(password)
+    save_users(users)
+    print("Signup successful.")
+    return username
+'''-------------------------------------------------------------------------------------'''
+#Authentication system(login)
+def login():
+    users = load_users()
+    username = input("Enter username: ").strip()
+    if username not in users:
+        print("Error: Username not found.")
+        return None
+    password = input("Enter password: ").strip()
+    if users[username] == hash_password(password):
+        print("Login successful.")
+        return username
+    else:
+        print("Error: Incorrect password.")
+        return None
+'''-------------------------------------------------------------------------------------'''
+# Adding a password
+def add_password(username, data):
+    try:
+        service = input("Service: ").strip().title()
+        if not service:
+            print("Error: Service name cannot be empty.")
+            return
+        username_input = input("Username: ").strip()
+        if not username_input:
+            print("Error: Username cannot be empty.")
+            return
+        password = input("Password: ")
+        if not password:
+            print("Error: Password cannot be empty.")
+            return
+        if username not in data:
+            data[username] = {}
+        data[username][service] = {'Username': username_input, 'Password': password}
+        print(f'Password for {service} added successfully.')
+    except Exception as e:
+        print(f"Error: {e}")
+'''-------------------------------------------------------------------------------------'''
+# Retrieving a password
+def retrieve_password(username, data):
+    try:
+        service = input("Enter the service to retrieve the password: ").strip().title()
+        if username in data and service in data[username]:
+            print(f"Service: {service}")
+            print(f"Username: {data[username][service]['Username']}")
+            print(f"Password: {data[username][service]['Password']}")
+        else:
+            print("Error: Service not found.")
+    except Exception as e:
+        print(f"Error: {e}")
+'''-------------------------------------------------------------------------------------'''
+# Deleting a password
+def delete_password(username, data):
+    try:
+        service = input("Enter the service to delete the password: ").strip().title()
+        if username in data and service in data[username]:
+            del data[username][service]
+            print(f'Password for {service} deleted successfully.')
+        else:
+            print("Error: Service not found.")
+    except Exception as e:
+        print(f"Error: {e}")
+'''-------------------------------------------------------------------------------------'''
+# Showing all passwords
+def show_password(username, data):
+    try:
+        if username in data:
+            for service, details in data[username].items():
+                print(f"Service: {service} , Username: {details['Username']} , Password: {details['Password']}")
+        else:
+            print("No passwords stored.")
+    except Exception as e:
+        print(f"Error: {e}")
+'''-------------------------------------------------------------------------------------'''
+# Main program
+def main():
+    users = load_users()
+    username = None
+    while not username:
+        print("\nWelcome to the Password Manager.")
+        print("1. Signup")
+        print("2. Login")
+        print("3. Quit")
+        choice = input("Enter your choice: ").strip()
+        if choice == "1":
+            username = signup()
+        elif choice == "2":
+            username = login()
+        elif choice == "3":
+            print("Goodbye!")
+            return
+        else:
+            print("Invalid choice. Please choose a valid option.")
+    
+    # Once the user is logged in, they can interact with the password manager
+    data = load_password()
+    while True:
+        print("\nPassword Manager Menu:")
+        print("1. Add Password")
+        print("2. Retrieve Password")
+        print("3. Delete Password")
+        print("4. Show Password")
+        print("5. Logout")
+        choice = input("Enter your choice: ").strip()
+        if choice == "1":
+            add_password(username, data)
+        elif choice == "2":
+            retrieve_password(username, data)
+        elif choice == "3":
+            delete_password(username, data)
+        elif choice == "4":
+            show_password(username, data)
+        elif choice == "5":
+            save_password(data)
+            print(f"Logged out. Goodbye {username}!")
+            break
+        else:
+            print("Invalid choice. Please choose a valid option.")
+
+if __name__ == '__main__':
+    main()
